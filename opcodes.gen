@@ -1,0 +1,41 @@
+
+assert(arg[1], "A filename must be given!")
+
+f = assert(io.open(arg[1], "r"))
+
+io.write [[#include "opcodes.hpp"
+
+OpCode opcodes[] = 
+{
+]]
+
+while true do
+	
+	local line = f:read("line")
+	if not line then
+		break
+	end
+	
+	local hex, name, appendix, mode, desc = line:match("([A-Fa-f0-9]+)%s+(%w+)%s?(%w?)%s+(%w+)%s+(.*)")
+	if hex and name then
+		if appendix ~= "" then
+			name = name .. " " .. appendix
+		end
+		
+		local mask = ("FFFF"):sub(1,#hex) .. ("0000"):sub(1,4-#hex)
+		
+		-- pad hex value with zeroes
+		for i=#hex,3 do
+			hex = hex .. "0"
+		end
+		
+		io.write("\t{ 0x", hex, ", 0x", mask, ", ARG_", mode, ", \"", name, "\" },\n")
+	
+	end
+end
+
+io.write [[	{ 0x0000, 0x0000, ARG_NULL, "" }, 
+};
+]]
+
+f:close()
