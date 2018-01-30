@@ -9,9 +9,9 @@
 COMMENT	;[^\r\n]*
 HEXNUM	\$[A-Fa-f0-9]+
 NUM	[0-9]+
-LABEL	[A-Za-z]+\:
-DIR	\.[A-Za-z]+
-ID	[A-Za-z]+
+LABEL	[A-Za-z0-9]+\:
+DIR	\.[A-Za-z0-9]+
+ID	[A-Za-z0-9]+
 LBRK	[\n\r]
 WS	[ \t]
 COMMA	,

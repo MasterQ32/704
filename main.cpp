@@ -103,6 +103,7 @@ class Assembler
 	asmword_t memory[memorySize];
 	std::map<std::string, int> labels;
 	std::vector<patch_t> patches;
+	bool error;
 
 	/**
 	 * @returns -1 on error, -2 on "requires patch", else integer value
@@ -132,6 +133,7 @@ class Assembler
 				}
 				// FALLTHROUGH
 			default:
+				error = true;
 				if(label)
 					fprintf(stderr, "%s is neither a number nor label in line %d\n", tok.text.c_str(), tok.line);
 				else
@@ -143,6 +145,7 @@ class Assembler
 public:
 	void assemble()
 	{
+		error = false;
 		cursor = 0;
 		while(true)
 		{
@@ -154,13 +157,27 @@ public:
 			switch(tok.type)
 			{
 				case TokenType::Directive: {
-					assert(tok.text == ".ORG");
-					tok.next();
-					int addr = toInt(tok);
-					if(addr == -1) {
-						continue;
+					if(tok.text == ".ORG") {
+						tok.next();
+						int addr = toInt(tok);
+						if(addr == -1) {
+							continue;
+						}
+						this->cursor = addr;
+					} else if (tok.text == ".WORD") {
+						tok.next();
+						
+						// TODO: Allow labels
+						int value = toInt(tok);
+						if(value < 0)
+							continue;
+						
+						memory[cursor++] = value;
+						
+					} else {
+						error = true;
+						fprintf(stderr, "unknown directive %s in line %d: %s\n", tok.text.c_str(), tok.line);
 					}
-					this->cursor = addr;
 					break;
 				}
 				case TokenType::Label:
@@ -169,6 +186,7 @@ public:
 				case TokenType::Name: {
 					OpCode const * op = findOpcode(tok.text);
 					if(op == nullptr) {
+						error = true;
 						fprintf(stderr, "unknown opcode in line %d: %s\n", tok.line, tok.text.c_str());
 						break;
 					}
@@ -187,17 +205,21 @@ public:
 							if(val == -1)
 								continue;
 							if(val == -2) {
-								fprintf(stderr, "patch for line %d: %s\n", tok.line, tok.text.c_str());
+								// fprintf(stderr, "patch for line %d: %s\n", tok.line, tok.text.c_str());
 								int pos = cursor;
 								patches.emplace_back([this,pos,value,op,tok]() {
-									fprintf(stderr, "patching line %d\n", tok.line);
 									int val = toInt(tok, true);
-									assert(val >= 0);
-									memory[pos] = value | ((~op->mask) & val);
+									if(val >= 0)
+										memory[pos] = value | ((~op->mask) & val);
+									else {
+										error = true;
+										fprintf(stderr, "missing label reference ('%s') in line %d\n", tok.text.c_str(), tok.line);
+									}
 								});
-								continue;
+								value = 0xFFFF; // Mark as "to be patched"
+							} else {
+								value |= (~op->mask) & val;
 							}
-							value |= (~op->mask) & val;
 							break;
 						}
 						case ARG_NUM: {
@@ -215,6 +237,7 @@ public:
 								continue;
 							tok.next();
 							if(tok.type != TokenType::Comma) {
+								error = true;
 								fprintf(stderr, "syntax error in line %d: comma expected\n", tok.line);
 								continue;
 							}
@@ -229,17 +252,18 @@ public:
 						default:
 							assert(false); 
 					}
-					memory[cursor] = value;
-					cursor++;
+					memory[cursor++] = value;
 					
 					tok.next();
 					if(tok.type != TokenType::LineBreak) {
+						error = true;
 						fprintf(stderr, "syntax error in line %d: comma expected\n", tok.line);
 					}
 					
 					break;
 				}
 				default:
+					error = true;
 					fprintf(stderr, "syntax error in line %d: %s\n", tok.line, tok.text.c_str());
 					break;
 			}
@@ -248,6 +272,11 @@ public:
 		// install patches:
 		for(patch_t const & patch : patches)
 			patch();
+		
+		if(error) {
+			fprintf(stderr, "error on assembling. stop.\n");
+			exit(1);
+		}
 	}
 	
 	void dump()
@@ -258,7 +287,25 @@ public:
 				continue;
 			if(i > 0 && !memory[i - 1].allocated)
 				printf("\n");
-			printf("%04X: %04X\n", i, memory[i].value);
+			printf("%04X:\t%04X\t", i, memory[i].value);
+			
+			for(int j = 15; j >= 0; j--)
+			{
+				if(memory[i].value & (1<<j))
+					printf("1");
+				else
+					printf(".");
+				if((j % 4) == 0)
+					printf(" ");
+			}
+			
+			for(auto const & lbl : labels) {
+				if(lbl.second != i)
+					continue;
+				printf(" %s", lbl.first.c_str());
+			}
+			
+			printf("\n");
 		}
 	}
 };
