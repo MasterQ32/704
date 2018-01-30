@@ -1,0 +1,82 @@
+OpCode  Operation
+1       JMP     ADDR    Jump
+2       JSX     ADDR    Jump and Store Return in Index
+3       STB     ADDR    Store Byte
+4       CMB     ADDR    Compare Byte
+5       LDB     ADDR    Load Byte
+6       STX     ADDR    Store Index
+7       STW     ADDR    Store Word
+8       LDW     ADDR    Load Word
+9       LDX     ADDR    Load Index
+A       ADD     ADDR    Add
+B       SUB     ADDR    Subtract
+C       ORI     ADDR    Inclusive Or
+D       ORE     ADDR    Exclusive Or
+E       AND     ADDR    And
+F       CMW     ADDR    Compare Word
+000     HLT     NULL    Halt
+001     INR     NULL    Interrupt Return
+002     ENB     NUM     Enable Interrupt
+003     DSB     NUM     Disable Interrupt
+004     SLM     NUM     Set Local Mode
+005     SGM     NUM     Set Global Mode
+006     CEX     NULL    Copy Extension to Index
+007     CXE     NULL    Copy Index to Extension
+008     SMB     NUM     Set Memory Bank
+008     SML     NUM     Select Memory Lower
+009     SMU     NUM     Select Memory Upper
+00A     MSK     NUM     Mask Interrupts
+00B     UNM     NUM     Unmask Interrupts
+00C     SUS     NUM     Select User State
+010     CLR     NULL    Clear Accumulator
+011     CMP     NULL    Complement Accumulator
+012     INV     NULL    Invert Accumulator
+013     CAX     NULL    Copy Accumulator to Index
+014     CXA     NULL    Copy Index to Accumulator
+02      DIN     IO      Direct Input
+03      DOT     IO      Direct Output
+04      IXS     NUM     Increment Index and Skip If Positive
+0400    SXP     NULL    Skip on Index Positive
+05      DXS     NUM     Decrement Index and Skip If Less Than Zero
+0500    SXM     NULL    Skip on Index Minus
+06      LLB     NUM     Load Literal Byte
+07      CLB     NUM     Compare Literal Byte
+080     SAZ     NULL    Skip on Accumulator Zero
+081     SAP     NULL    Skip on Accumulator Positive
+082     SAM     NULL    Skip on Accumulator Minus
+083     SAO     NULL    Skip on Accumulator Odd
+084     SLS     NULL    Skip on Compare Less
+085     SXE     NULL    Skip on Index Even
+086     SEQ     NULL    Skip on Compare Equal
+087     SNE     NULL    Skip on Compare Not Equal
+088     SGR     NULL    Skip on Compare Greater
+089     SLE     NULL    Skip on Compare Less or Equal
+08A     SNO     NULL    Skip on No Overflow
+08B     SSE     NULL    Skip on Sense External False
+08C     SS0     NULL    Skip on Sense Switch 0 False
+08D     SS1     NULL    Skip on Sense Switch 1 False
+08E     SS2     NULL    Skip on Sense Switch 2 False
+08F     SS3     NULL    Skip on Sense Switch 3 False
+090     SRA     NUM     Shift Right Arithmetic
+091     SLA     NUM     Shift Left Arithmetic
+092     SRA D   NUM     Shift Right Arithmetic Double
+093     SLA D   NUM     Shift Left Arithmetic Double
+0A0     SRL     NUM     Shift Right Logical
+0A00    NOP     NULL    No Operation
+0A1     SLL     NUM     Shift Left Logical
+0A2     SRL D   NUM     Shift Right Logical Double
+0A3     SLL D   NUM     Shift Left Logical Double
+0A4     SRC     NUM     Shift Right Circular
+0A5     SLC     NUM     Shift Left Circular
+0A6     SRC D   NUM     Shift Right Circular Double
+0A7     SLC D   NUM     Shift Left Circular Double
+0A8     SRL L   NUM     Shift Right Logical Left Byte
+0A9     SLL L   NUM     Shift Left Logical Left Byte
+0AA     SRL R   NUM     Shift Left Logical Right Byte
+0AB     SLL R   NUM     Shift Right Logical Right Byte
+0AC     SRC L   NUM     Shift Right Circular Left Byte
+0AD     SLC L   NUM     Shift Left Circular Left Byte
+0AE     SRC R   NUM     Shift Right Circular Right Byte
+0AF     SLC R   NUM     Shift Left Circular Right Byte
+0B0F    MPY     NULL    Multiply A
+0C0F    DIV     NULL    Divide XA

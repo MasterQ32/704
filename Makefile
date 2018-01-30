@@ -10,7 +10,7 @@ all: $(PGM_ASM)
 $(PGM_ASM): main.cpp opcodes.cpp parser.cpp tokens.cpp
 	$(CXX) -g -o $@ $^
 
-opcodes.cpp: opcodes.gen ../docs/opcodes.txt
+opcodes.cpp: opcodes.gen opcodes.txt
 	lua $^ > $@
 
 parser.cpp: parser.l
