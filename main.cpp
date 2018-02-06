@@ -116,6 +116,8 @@ class Assembler
 				return std::stoi(tok.text);
 			case TokenType::HexNumber:
 				return std::stoi(tok.text.substr(1), nullptr, 16);
+			case TokenType::Character:
+				return tok.text[1];
 			case TokenType::Name:
 				if(label)
 				{
@@ -142,6 +144,18 @@ class Assembler
 		}
 	}
 	
+	void putbyte(int & address, int & byteaddr, uint8_t val)
+	{
+		if(byteaddr == 0) {
+			memory[address] = (val << 8);
+			byteaddr = 1;
+		} else {
+			memory[address].value |= val;
+			address += 1;
+			byteaddr = 0;
+		}
+	}
+	
 public:
 	void assemble()
 	{
@@ -157,24 +171,93 @@ public:
 			switch(tok.type)
 			{
 				case TokenType::Directive: {
-					if(tok.text == ".ORG") {
+					if(tok.text == ".ORG")
+					{
 						tok.next();
 						int addr = toInt(tok);
 						if(addr == -1) {
 							continue;
 						}
 						this->cursor = addr;
-					} else if (tok.text == ".WORD") {
-						tok.next();
+					}
+					else if (tok.text == ".WORD")
+					{
+						do {
+							tok.next();
+							
+							if(tok.type == TokenType::String)
+							{
+								for(int i = 1; i < tok.text.length() - 1; i++)
+								{
+									memory[cursor++] = tok.text[i];
+								}
+							}
+							else
+							{
+								int value = toInt(tok, true);
+								if(value == -1)
+									break;
+								if(value == -2)
+								{
+									// fprintf(stderr, "patch for line %d: %s\n", tok.line, tok.text.c_str());
+									int pos = cursor;
+									patches.emplace_back([this,pos,tok]() {
+										int val = toInt(tok, true);
+										if(val >= 0) {
+											memory[pos] = val;
+										}
+										else {
+											error = true;
+											fprintf(stderr, "missing label reference ('%s') in line %d\n", tok.text.c_str(), tok.line);
+										}
+									});
+									memory[cursor] = 0xFFFF; // Mark as "to be patched"
+								}
+								else
+								{
+									memory[cursor] = value;
+								}
+								cursor += 1;
+							}
+							
+							tok.next();
+						} while(tok.type == TokenType::Comma);
+					}
+					else if (tok.text == ".BYTE")
+					{
+						int byteidx = 0;
+						do {
+							tok.next();
+							
+							if(tok.type == TokenType::String)
+							{
+								for(int i = 1; i < tok.text.length() - 1; i++)
+								{
+									putbyte(cursor, byteidx, tok.text[i]);
+								}
+							}
+							else
+							{
+								int value = toInt(tok);
+								if(value < 0)
+									break;
+								if(value > 0xFF)
+									fprintf(stderr, "warning: %s is out of byte range in line %d\n", tok.text.c_str(), tok.line);
+								
+								putbyte(cursor, byteidx, value);
+							}
+							
+							tok.next();
+						} while(tok.type == TokenType::Comma);
+						if(byteidx > 0)
+						{
+							fprintf(stderr, "warning: invalid word alignment in line %d. Padding byte inserted.\n", tok.line);
+							cursor++;
+						}
 						
-						// TODO: Allow labels
-						int value = toInt(tok);
-						if(value < 0)
-							continue;
-						
-						memory[cursor++] = value;
-						
-					} else {
+					} 
+					else
+					{
 						error = true;
 						fprintf(stderr, "unknown directive %s in line %d: %s\n", tok.text.c_str(), tok.line);
 					}
@@ -209,9 +292,9 @@ public:
 								int pos = cursor;
 								patches.emplace_back([this,pos,value,op,tok]() {
 									int val = toInt(tok, true);
-									if(val >= 0)
+									if(val >= 0) {
 										memory[pos] = value | ((~op->mask) & val);
-									else {
+									} else {
 										error = true;
 										fprintf(stderr, "missing label reference ('%s') in line %d\n", tok.text.c_str(), tok.line);
 									}

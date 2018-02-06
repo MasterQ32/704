@@ -11,7 +11,9 @@ enum class TokenType
 	Directive,
 	Name,
 	LineBreak,
-	Comma
+	Comma,
+	String,
+	Character
 };
 
 struct Token
