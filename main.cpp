@@ -180,6 +180,21 @@ public:
 						}
 						this->cursor = addr;
 					}
+					else if(tok.text == ".EQU")
+					{
+						tok.next();
+						if(tok.type != TokenType::Name) {
+							fprintf(stderr, "expected name in line %d\n", tok.line);
+							break;
+						}
+						std::string name = tok.text;
+						tok.next();
+						int addr = toInt(tok);
+						if(addr == -1) {
+							continue;
+						}
+						this->labels.emplace(name, addr);
+					}
 					else if (tok.text == ".WORD")
 					{
 						do {
